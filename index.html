@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="sk" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rozdelenie žiakov do skupín</title>
+  <meta name="description" content="Jednoduchá pomôcka na náhodné rozdelenie žiakov do skupín — podľa počtu alebo podľa menného zoznamu." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <h1>Rozdelenie žiakov do skupín</h1>
+        <p class="subtitle">Náhodné žrebovanie podľa počtu alebo menného zoznamu</p>
+      </div>
+      <div class="header-controls">
+        <div class="font-control">
+          <span class="font-label">Text:</span>
+          <button id="fontMinus" class="icon-btn" aria-label="Zmenšiť text">A−</button>
+          <input type="range" id="fontSize" min="14" max="48" step="1" value="20" aria-label="Veľkosť textu výsledkov" />
+          <button id="fontPlus" class="icon-btn" aria-label="Zväčšiť text">A+</button>
+          <span id="fontValue" class="font-value">20 px</span>
+        </div>
+        <button id="themeToggle" class="btn btn-ghost" aria-label="Prepnúť svetlý / tmavý režim">Tmavý režim</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <nav class="tabs" role="tablist" aria-label="Režim zadávania">
+      <button id="tabCount" class="tab active" role="tab" aria-selected="true">Podľa počtu</button>
+      <button id="tabNames" class="tab" role="tab" aria-selected="false">Menný zoznam</button>
+    </nav>
+
+    <!-- Režim: počet žiakov (pôvodná funkcionalita) -->
+    <section id="panelCount" class="panel" role="tabpanel">
+      <div class="card">
+        <h2>Rozdelenie podľa počtu</h2>
+        <p class="hint">Zadáš počet žiakov (čísla 1 až N) a počet skupín. Program čísla náhodne premieša a rozdá do skupín.</p>
+        <div class="grid-2">
+          <label class="field">
+            <span>Počet žiakov</span>
+            <input type="number" id="studentCount" min="1" max="1000" value="24" />
+          </label>
+          <label class="field">
+            <span>Počet skupín</span>
+            <input type="number" id="groupCount" min="1" max="100" value="4" />
+          </label>
+        </div>
+        <div class="actions">
+          <button id="drawCount" class="btn btn-primary">Rozdeliť čísla</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Režim: menný zoznam -->
+    <section id="panelNames" class="panel hidden" role="tabpanel">
+      <div class="card">
+        <h2>Menný zoznam</h2>
+        <p class="hint">Každé meno na nový riadok. Zoznam si môžeš uložiť pod názvom a neskôr znova použiť. Funguje aj pretiahnutie textového súboru (.txt / .csv) do poľa.</p>
+
+        <div class="lists-row">
+          <label class="field grow">
+            <span>Uložené zoznamy</span>
+            <select id="savedLists"></select>
+          </label>
+          <div class="lists-buttons">
+            <button id="loadList" class="btn btn-ghost" title="Načítať vybraný zoznam">Načítať</button>
+            <button id="deleteList" class="btn btn-ghost danger" title="Vymazať vybraný zoznam">Vymazať</button>
+          </div>
+        </div>
+        <div class="lists-row">
+          <label class="field grow">
+            <span>Názov aktuálneho zoznamu</span>
+            <input type="text" id="listName" placeholder="napr. 5.A – informatika" />
+          </label>
+          <div class="lists-buttons">
+            <button id="saveList" class="btn btn-ghost" title="Uložiť aktuálny zoznam">Uložiť zoznam</button>
+          </div>
+        </div>
+
+        <label class="field">
+          <span>Mená žiakov <em id="nameCounter">(0)</em></span>
+          <textarea id="namesInput" rows="8" placeholder="Anna Nováková&#10;Peter Horváth&#10;Jana Kováčová&#10;…"></textarea>
+        </label>
+
+        <div class="grid-2">
+          <label class="field">
+            <span>Počet skupín</span>
+            <input type="number" id="groupCountNames" min="1" max="100" value="4" />
+          </label>
+          <label class="field">
+            <span>Pridať meno</span>
+            <span class="inline-add">
+              <input type="text" id="singleName" placeholder="Meno Priezvisko" />
+              <button id="addName" class="btn btn-ghost">Pridať</button>
+            </span>
+          </label>
+        </div>
+
+        <div class="actions wrap">
+          <button id="drawNames" class="btn btn-primary">Rozdeliť mená</button>
+          <label class="btn btn-ghost file-btn">
+            Načítať zo súboru
+            <input type="file" id="fileInput" accept=".txt,.csv,.md" hidden />
+          </label>
+          <button id="clearNames" class="btn btn-ghost">Vyčistiť</button>
+          <button id="sortNames" class="btn btn-ghost" title="Zoradiť mená podľa abecedy">Zoradiť</button>
+          <button id="dedupNames" class="btn btn-ghost" title="Odstrániť duplicity a prázdne riadky">Bez duplicít</button>
+        </div>
+      </div>
+    </section>
+
+    <p id="errorBox" class="error hidden" role="alert"></p>
+
+    <section id="resultsSection" class="hidden" aria-live="polite">
+      <div class="results-header">
+        <h2 id="resultsTitle">Výsledok</h2>
+        <div class="actions wrap">
+          <button id="reshuffle" class="btn btn-ghost" title="Znova náhodne rozdeliť rovnaký vstup">Znova zamiešať</button>
+          <button id="copyResult" class="btn btn-ghost">Kopírovať</button>
+          <button id="exportTxt" class="btn btn-ghost">TXT</button>
+          <button id="exportCsv" class="btn btn-ghost">CSV</button>
+          <button id="printResult" class="btn btn-ghost">Tlačiť</button>
+          <button id="fullscreenBtn" class="btn btn-ghost">Na celú plochu</button>
+        </div>
+      </div>
+      <div id="resultsGrid" class="results-grid"></div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <span>Náhodné rozdeľovanie (Fisher–Yates) • MIT licencia</span>
+    <span class="ai-note">Časť kódu a textov vznikla s pomocou AI (Muse Spark) a autor ju skontroloval.</span>
+  </footer>
+
+  <div id="fsOverlay" class="fs-overlay hidden" role="dialog" aria-modal="true" aria-label="Výsledok na celú plochu">
+    <div class="fs-inner">
+      <div class="fs-header">
+        <h2 id="fsTitle">Výsledok</h2>
+        <div class="fs-controls">
+          <button id="fsMinus" class="icon-btn" aria-label="Zmenšiť text">A−</button>
+          <button id="fsPlus" class="icon-btn" aria-label="Zväčšiť text">A+</button>
+          <button id="fsFit" class="btn btn-ghost" aria-pressed="false" title="Automaticky zmenšiť písmo tak, aby boli všetky skupiny vidieť naraz bez rolovania">Zmestiť všetko</button>
+          <button id="fsClose" class="btn btn-primary">Zavrieť (Esc)</button>
+        </div>
+      </div>
+      <p id="fsFitNote" class="fs-note hidden" role="status"></p>
+      <div id="fsGrid" class="results-grid fs-grid"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
